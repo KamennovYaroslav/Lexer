@@ -1,0 +1,80 @@
+%option noyywrap
+%option never-interactive
+%option yylineno
+
+%{
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <string.h>
+	#include <conio.h>
+	#include <locale.h> 
+
+    void lexprint(char * lexem, char  token[15], int line); 
+%}
+
+
+%{
+	int count = 0;
+        void lexprint(char * lexem, char  token[15], int line){
+                printf("%s\t%s\t%d\t%d\n", lexem, token, yylineno, count);
+                count++;
+        }
+%}
+%% 
+
+if {lexprint(yytext, "IF", yylineno);}
+else {lexprint(yytext, "ELSE", yylineno);}
+elseif {lexprint(yytext, "ELSEIF", yylineno);}
+for {lexprint(yytext, "FOR", yylineno);}
+def {lexprint(yytext, "FUNCTION_START", yylineno);}
+end {lexprint(yytext, "BLOCK_ENDING", yylineno);}
+begin {lexprint(yytext, "BLOCK_BEGINNING", yylineno);}
+\. {lexprint(yytext, "POINT", yylineno);}
+alias {lexprint(yytext, "ALIAS", yylineno);}
+and {lexprint(yytext, "AND", yylineno);}
+break {lexprint(yytext, "BREAK", yylineno);}
+case {lexprint(yytext, "CASE", yylineno);}
+class {lexprint(yytext, "CLASS_DEF", yylineno);}
+defined? {lexprint(yytext, "CHECK_DEF", yylineno);}
+do {lexprint(yytext, "DO", yylineno);}
+ensure {lexprint(yytext, "ENSURE", yylineno);}
+false {lexprint(yytext, "FALSE", yylineno);}
+in {lexprint(yytext, "IN", yylineno);}
+module {lexprint(yytext, "MODULE", yylineno);}
+next {lexprint(yytext, "NEXT", yylineno);}
+nil {lexprint(yytext, "NIL", yylineno);}
+not {lexprint(yytext, "NOT", yylineno);}
+or {lexprint(yytext, "OR", yylineno);}
+redo {lexprint(yytext, "REDO", yylineno);}
+rescue {lexprint(yytext, "RESCUE", yylineno);}
+retry {lexprint(yytext, "RETRY", yylineno);}
+return {lexprint(yytext, "RETURN", yylineno);}
+self {lexprint(yytext, "SELF", yylineno);}
+super {lexprint(yytext, "SUPER", yylineno);}
+then {lexprint(yytext, "THEN", yylineno);}
+true {lexprint(yytext, "TRUE", yylineno);}
+undef {lexprint(yytext, "UNDEF", yylineno);}
+unless {lexprint(yytext, "UNLESS", yylineno);}
+until {lexprint(yytext, "UNTIL", yylineno);}
+when {lexprint(yytext, "WHEN", yylineno);}
+while {lexprint(yytext, "WHILE", yylineno);}
+yield {lexprint(yytext, "YIELD", yylineno);}
+
+
+#[\w]+\n {lexprint(yytext, "LINE_COMMENT", yylineno);}
+^=begin {lexprint(yytext, "MULTILINE_COMMENT", yylineno);}
+[A-Za-z_][A-Za-z_0-9]* {lexprint(yytext, "ID", yylineno);}
+
+%% 
+  
+void main(int argc, char **argv ){
+	freopen("LexemTable.tsv", "w", stdout);
+	freopen("err.log", "w", stderr);
+
+        if (argc > 0){yyin = fopen( argv[1], "r" );} else yyin = stdin;
+        
+        printf("lexem\ttoken\tline\tnumber\n");
+        
+        yylex();
+        return;
+}
