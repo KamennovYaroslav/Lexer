@@ -12,9 +12,11 @@
     void lexprint(char * lexem, char  token[15], int line); 
 %}
 
+%x MLCOMMENT
 
 %{
 	int count = 0;
+	char comment[1000];
         void lexprint(char * lexem, char  token[15], int line){
                 printf("%s\t%s\t%d\t%d\n", lexem, token, yylineno, count);
                 count++;
@@ -62,7 +64,10 @@ yield {lexprint(yytext, "YIELD", yylineno);}
 
 
 #[\w]+\n {lexprint(yytext, "LINE_COMMENT", yylineno);}
-^=begin {lexprint(yytext, "MULTILINE_COMMENT", yylineno);}
+^=begin {comment[0] = 0; BEGIN(MLCOMMENT);}
+<MLCOMMENT>^=end {lexprint(comment, "MULTILINE_COMMENT", yylineno);}
+<MLCOMMENT>\w {strcat(comment, yytext);}
+
 [A-Za-z_][A-Za-z_0-9]* {lexprint(yytext, "ID", yylineno);}
 
 %% 
