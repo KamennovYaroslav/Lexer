@@ -145,6 +145,7 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 \@			{lexprint(yytext, "COMMERTIAL_AT", yylineno);}
 \$				{lexprint(yytext, "DOLLAR", yylineno);}
 
+[ ] {}
 \\a				{lexprint(yytext, "BELL", yylineno);}
 \\b				{lexprint(yytext, "BACKSPACE", yylineno);}
 \\e				{lexprint(yytext, "ESCAPE", yylineno);}
@@ -182,7 +183,6 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 0x[0-9a-fA-F](\_[0-9a-fA-F]+|[0-9a-fA-F]+)*	{int n16; sscanf(yytext,"%i", &n16); lexprint1(n16, "INT", yylineno);}
 [0-9](\_[0-9]+|[0-9]+)* 						{int n10; sscanf(yytext,"%d", &n10); lexprint1(n10, "INT", yylineno);}
 [0-9]+(\.|e-?)[0-9]+					{float f; sscanf(yytext,"%f", &f);lexprint2(f, "FLOAT", yylineno);}
-
 
 \#[^\n]+ {lexprint(yytext, "LINE_COMMENT", yylineno);}
 
