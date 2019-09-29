@@ -37,7 +37,120 @@ break 		{lexprint(yytext, "BREAK", yylineno);}
 case 		{lexprint(yytext, "CASE", yylineno);}
 class 		{lexprint(yytext, "CLASS_DEF", yylineno);}
 defined? 	{lexprint(yytext, "CHECK_DEF", yylineno);}
+do 			{lexprint(yytext, "DO", yylineno);}%option noyywrap
+%option never-interactive
+%option yylineno
+
+%{
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <string.h>
+	#include <conio.h>
+	#include <locale.h> 
+
+    void lexprint(char * lexem, char  token[15], int line); 
+%}
+
+%x MLCOMMENT
+
+%{
+	int count = 0;
+	char comment[1000];
+        void lexprint(char * lexem, char  token[15], int line){
+                printf("%s\t%s\t%d\t%d\n", lexem, token, yylineno, count);
+                count++;
+        }
+%}
+%% 
+
+if 				{lexprint(yytext, "IF", yylineno);}
+else 			{lexprint(yytext, "ELSE", yylineno);}
+elseif 		{lexprint(yytext, "ELSEIF", yylineno);}
+for 			{lexprint(yytext, "FOR", yylineno);}
+def 			{lexprint(yytext, "FUNCTION_START", yylineno);}
+end 			{lexprint(yytext, "BLOCK_ENDING", yylineno);}
+begin 		{lexprint(yytext, "BLOCK_BEGINNING", yylineno);}
+alias 			{lexprint(yytext, "ALIAS", yylineno);}
+and 			{lexprint(yytext, "AND", yylineno);}
+break 		{lexprint(yytext, "BREAK", yylineno);}
+case 		{lexprint(yytext, "CASE", yylineno);}
+class 		{lexprint(yytext, "CLASS_DEF", yylineno);}
+defined? 	{lexprint(yytext, "CHECK_DEF", yylineno);}
 do 			{lexprint(yytext, "DO", yylineno);}
+ensure 		{lexprint(yytext, "ENSURE", yylineno);}
+false 		{lexprint(yytext, "FALSE", yylineno);}
+in 				{lexprint(yytext, "IN", yylineno);}
+module 	{lexprint(yytext, "MODULE", yylineno);}
+next 		{lexprint(yytext, "NEXT", yylineno);}
+nil 			{lexprint(yytext, "NIL", yylineno);}
+not 			{lexprint(yytext, "NOT", yylineno);}
+or 			{lexprint(yytext, "OR", yylineno);}
+redo 		{lexprint(yytext, "REDO", yylineno);}
+rescue 		{lexprint(yytext, "RESCUE", yylineno);}
+retry 		{lexprint(yytext, "RETRY", yylineno);}
+return 		{lexprint(yytext, "RETURN", yylineno);}
+self 			{lexprint(yytext, "SELF", yylineno);}
+super 		{lexprint(yytext, "SUPER", yylineno);}
+then 		{lexprint(yytext, "THEN", yylineno);}
+true 			{lexprint(yytext, "TRUE", yylineno);}
+undef 		{lexprint(yytext, "UNDEF", yylineno);}
+unless 		{lexprint(yytext, "UNLESS", yylineno);}
+until 			{lexprint(yytext, "UNTIL", yylineno);}
+when 		{lexprint(yytext, "WHEN", yylineno);}
+while 		{lexprint(yytext, "WHILE", yylineno);}
+yield 		{lexprint(yytext, "YIELD", yylineno);}
+
+\. 				{lexprint(yytext, "POINT", yylineno);}
+
+\+ 			{lexprint(yytext, "PLUS", yylineno);}
+\+\+ 		{lexprint(yytext, "DOUBLE_PLUS", yylineno);}
+\- 			{lexprint(yytext, "MINUS", yylineno);}
+\-\- 			{lexprint(yytext, "DOUBLE_MINUS", yylineno);}
+\* 			{lexprint(yytext, "MULTIPLICATION", yylineno);}
+\*\* 		{lexprint(yytext, "EXPONANTIATON", yylineno);}
+\/ 			{lexprint(yytext, "WHOLE_DIVISION", yylineno);}
+\%			{lexprint(yytext, "REMINDER_OF_DIVISION", yylineno);}
+\*\=			{lexprint(yytext, "MULTIPLICATION_LEFT", yylineno);}
+\/\=			{lexprint(yytext, "WHOLE_DIVISION_LEFT", yylineno);}
+\+\=		{lexprint(yytext, "PLUS_LEFT", yylineno);}
+\-\=			{lexprint(yytext, "MINUS_LEFT", yylineno);}
+
+\<			{lexprint(yytext, "LESS", yylineno);}
+\>			{lexprint(yytext, "MORE", yylineno);}
+\<\=		{lexprint(yytext, "LESS_OR_EQUAL", yylineno);}
+\>\=		{lexprint(yytext, "MORE_OR_EQUAL", yylineno);}
+\=			{lexprint(yytext, "ASSIGNMENT", yylineno);}
+\=\=		{lexprint(yytext, "EQUALITY", yylineno);}
+\=\=\=		{lexprint(yytext, "EQUALITY_TRIPPLE", yylineno);}
+\<\=\>		{lexprint(yytext, "EQUALITY_FULL", yylineno);}
+
+\&\&			{lexprint(yytext, "AND", yylineno);}
+\|\|			{lexprint(yytext, "OR", yylineno);}
+\!				{lexprint(yytext, "NOT", yylineno);}
+
+
+#[\w]+\n {lexprint(yytext, "LINE_COMMENT", yylineno);}
+^=begin 	{comment[0] = 0; BEGIN(MLCOMMENT);}
+
+<MLCOMMENT>^=end 	{lexprint(comment, "MULTILINE_COMMENT", yylineno); BEGIN(INITIAL);}
+<MLCOMMENT>\w 			{strcat(comment, yytext);}
+
+[A-Za-z_][A-Za-z_0-9]* 	{lexprint(yytext, "ID", yylineno);}
+
+%% 
+  
+void main(int argc, char **argv ){
+	freopen("LexemTable.tsv", "w", stdout);
+	freopen("err.log", "w", stderr);
+
+        if (argc > 0){yyin = fopen( argv[1], "r" );} else yyin = stdin;
+        
+        printf("lexem\ttoken\tline\tnumber\n");
+        
+        yylex();
+        return;
+}
+
 ensure 		{lexprint(yytext, "ENSURE", yylineno);}
 false 		{lexprint(yytext, "FALSE", yylineno);}
 in 				{lexprint(yytext, "IN", yylineno);}
