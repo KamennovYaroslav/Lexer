@@ -63,9 +63,9 @@ while {lexprint(yytext, "WHILE", yylineno);}
 yield {lexprint(yytext, "YIELD", yylineno);}
 
 
-#[\w]+\n {lexprint(yytext, "LINE_COMMENT", yylineno);}
+\#[^\n]* {lexprint(yytext, "LINE_COMMENT", yylineno);}
 ^=begin {comment[0] = 0; BEGIN(MLCOMMENT);}
-<MLCOMMENT>^=end {lexprint(comment, "MULTILINE_COMMENT", yylineno);}
+<MLCOMMENT>^=end {lexprint(comment, "MULTILINE_COMMENT", yylineno); BEGIN(INITIAL);}
 <MLCOMMENT>\w {strcat(comment, yytext);}
 
 [A-Za-z_][A-Za-z_0-9]* {lexprint(yytext, "ID", yylineno);}
