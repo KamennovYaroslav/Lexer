@@ -12,6 +12,7 @@
     void lexprint(char * lexem, char  token[150], int line); 
 	void lexprint1(int lexem, char  token[150], int line);
 	void lexprint2(float lexem, char  token[150], int line);
+	int binaryToDecimal(char* strBin);
 %}
 
 %x MLCOMMENT
@@ -21,6 +22,7 @@
 
 %{
 	int count = 0;
+	int insertCounter = 0;
 	char comment[1000];
 	char str[1000];
         void lexprint(char * lexem, char  token[150], int line){
@@ -35,9 +37,28 @@
                 printf("%f\t%s\t%d\t%d\n", lexem, token, yylineno, count);
                 count++;
         }
+		// Function to convert binary to decimal
+		int binaryToDecimal(char* strBin)
+		{
+			char strBufer[100] = {0};
+			strcpy(strBufer, strBin);
+			int dec_value = 0;
+
+			// Initializing base value to 1, i.e 2^0
+			int base = 1;
+
+			int len = strlen(strBufer);
+			for (int i = len - 1; i > 1; i--) {
+				if (strBufer[i] == '1')
+					dec_value += base;
+				base = base * 2;
+			}
+
+			return dec_value;
+		}
 %}
 %% 
-<INSERT>\} {str[0] = 0; lexprint("+", "CONCATINATION", yylineno); BEGIN(STRING1);}
+<INSERT>\} {lexprint(yytext, "BRACE_CLOSE", yylineno); str[0] = 0; lexprint("+", "CONCATINATION", yylineno); BEGIN(STRING1);}
 
 if 				{lexprint(yytext, "IF", yylineno);}
 else 			{lexprint(yytext, "ELSE", yylineno);}
@@ -142,8 +163,9 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 
 \" {str[0] = 0; BEGIN(STRING1);}
 <STRING1>\\\" {strcat(str, "\"");}
-<STRING1>\" {lexprint(str, "STRING_LITIRAL", yylineno); BEGIN(INITIAL);}
-<STRING1>\#\{ {lexprint(str, "STRING_LITIRAL", yylineno); lexprint("+", "CONCATINATION", yylineno); BEGIN(INSERT);}
+<STRING1>\" {lexprint(str, "STRING_LITIRAL", yylineno); insertCounter--; if(insertCounter==0)BEGIN(INITIAL);else BEGIN(INSERT);}
+<STRING1>\\# {strcat(str, "#");}
+<STRING1>\# {lexprint(str, "STRING_LITIRAL", yylineno); insertCounter++; lexprint("+", "CONCATINATION", yylineno); BEGIN(INSERT);}
 
 \' {str[0] = 0; BEGIN(STRING2);}
 <STRING2>\\\' {strcat(str, "\'");}
@@ -155,10 +177,10 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 <STRING1,STRING2>\\n {strcat(str, "\n");}
 <STRING1,STRING2>. {strcat(str, yytext);}
 
-0[0-7](\_[0-7]+)*						{int n8; sscanf(yytext,"%o", &n8); lexprint1(n8, "INT_8", yylineno);}
-0x[0-9a-fA-F](\_[0-9a-fA-F]+)*	{int n16; sscanf(yytext,"%i", &n16); lexprint1(n16, "INT_16", yylineno);}
-0b[0-1](\_[0-1]+)*						{lexprint(yytext, "INT_2", yylineno);}
-[0-9](\_[0-9]+)* 						{int n10; sscanf(yytext,"%d", &n10); lexprint1(n10, "INT_10", yylineno);}
+0b[0-1](\_[0-1]+|[0-1]+)*						{lexprint1(binaryToDecimal(yytext), "INT", yylineno);}
+0[0-7](\_[0-7]+|[0-7]+)*						{int n8; sscanf(yytext,"%o", &n8); lexprint1(n8, "INT", yylineno);}
+0x[0-9a-fA-F](\_[0-9a-fA-F]+|[0-9a-fA-F]+)*	{int n16; sscanf(yytext,"%i", &n16); lexprint1(n16, "INT", yylineno);}
+[0-9](\_[0-9]+|[0-9]+)* 						{int n10; sscanf(yytext,"%d", &n10); lexprint1(n10, "INT", yylineno);}
 [0-9]+(\.|e-?)[0-9]+					{float f; sscanf(yytext,"%f", &f);lexprint2(f, "FLOAT", yylineno);}
 
 
