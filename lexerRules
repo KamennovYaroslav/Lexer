@@ -165,10 +165,10 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 #{expr}	{lexprint(yytext, "VALUE_OF_EXPRESSION", yylineno);}
 
 
-[1-9](\_[0-9]+)* 						{lexprint(yytext, "INT_10", yylineno);}
 0[0-7](\_[0-7]+)*						{lexprint(yytext, "INT_8", yylineno);}
 0x[0-9a-fA-F](\_[0-9a-fA-F]+)*	{lexprint(yytext, "INT_16", yylineno);}
 0b[0-1](\_[0-1]+)*						{lexprint(yytext, "INT_2", yylineno);}
+[0-9](\_[0-9]+)* 						{lexprint(yytext, "INT_10", yylineno);}
 [0-9]+(\.|e-?)[0-9]+					{lexprint(yytext, "FLOAT", yylineno);}
 
 
