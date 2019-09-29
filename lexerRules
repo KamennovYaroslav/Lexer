@@ -1,0 +1,223 @@
+%option noyywrap
+%option never-interactive
+%option yylineno
+
+%{
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <string.h>
+	#include <conio.h>
+	#include <locale.h> 
+
+    void lexprint(char * lexem, char  token[150], int line); 
+	void lexprint1(int lexem, char  token[150], int line);
+	void lexprint2(float lexem, char  token[150], int line);
+	int binaryToDecimal(char* strBin);
+%}
+
+%x MLCOMMENT
+%x STRING1
+%x STRING2
+%s INSERT
+%x REGEXP
+
+%{
+	int count = 0;
+	int insertCounter = 0;
+	char comment[1000];
+	char str[1000];
+        void lexprint(char * lexem, char  token[150], int line){
+                printf("%s\t%s\t%d\t%d\n", lexem, token, yylineno, count);
+                count++;
+        }
+		void lexprint1(int lexem, char  token[150], int line){
+                printf("%d\t%s\t%d\t%d\n", lexem, token, yylineno, count);
+                count++;
+        }
+		void lexprint2(float lexem, char  token[150], int line){
+                printf("%f\t%s\t%d\t%d\n", lexem, token, yylineno, count);
+                count++;
+        }
+		// Function to convert binary to decimal
+		int binaryToDecimal(char* strBin)
+		{
+			char strBufer[100] = {0};
+			strcpy(strBufer, strBin);
+			int dec_value = 0;
+
+			// Initializing base value to 1, i.e 2^0
+			int base = 1;
+
+			int len = strlen(strBufer);
+			for (int i = len - 1; i > 1; i--) {
+				if (strBufer[i] == '1')
+					dec_value += base;
+				base = base * 2;
+			}
+
+			return dec_value;
+		}
+%}
+%% 
+<INSERT>\} {lexprint(yytext, "BRACE_CLOSE", yylineno); str[0] = 0; lexprint("+", "CONCATINATION", yylineno); BEGIN(STRING1);}
+
+if 				{lexprint(yytext, "IF", yylineno);}
+else 			{lexprint(yytext, "ELSE", yylineno);}
+elseif 		{lexprint(yytext, "ELSEIF", yylineno);}
+for 			{lexprint(yytext, "FOR", yylineno);}
+def 			{lexprint(yytext, "FUNCTION_START", yylineno);}
+end 			{lexprint(yytext, "BLOCK_ENDING", yylineno);}
+begin 		{lexprint(yytext, "BLOCK_BEGINNING", yylineno);}
+alias 			{lexprint(yytext, "ALIAS", yylineno);}
+and 			{lexprint(yytext, "AND", yylineno);}
+break 		{lexprint(yytext, "BREAK", yylineno);}
+case 		{lexprint(yytext, "CASE", yylineno);}
+class 		{lexprint(yytext, "CLASS_DEF", yylineno);}
+defined? 	{lexprint(yytext, "CHECK_DEF", yylineno);}
+do 			{lexprint(yytext, "DO", yylineno);}
+ensure 		{lexprint(yytext, "ENSURE", yylineno);}
+false 		{lexprint(yytext, "FALSE", yylineno);}
+in 				{lexprint(yytext, "IN", yylineno);}
+module 	{lexprint(yytext, "MODULE", yylineno);}
+next 		{lexprint(yytext, "NEXT", yylineno);}
+nil 			{lexprint(yytext, "NIL", yylineno);}
+not 			{lexprint(yytext, "NOT", yylineno);}
+new 			{lexprint(yytext, "NEW", yylineno);}
+or 			{lexprint(yytext, "OR", yylineno);}
+redo 		{lexprint(yytext, "REDO", yylineno);}
+rescue 		{lexprint(yytext, "RESCUE", yylineno);}
+retry 		{lexprint(yytext, "RETRY", yylineno);}
+return 		{lexprint(yytext, "RETURN", yylineno);}
+self 			{lexprint(yytext, "SELF", yylineno);}
+super 		{lexprint(yytext, "SUPER", yylineno);}
+then 		{lexprint(yytext, "THEN", yylineno);}
+true 			{lexprint(yytext, "TRUE", yylineno);}
+undef 		{lexprint(yytext, "UNDEF", yylineno);}
+unless 		{lexprint(yytext, "UNLESS", yylineno);}
+until 			{lexprint(yytext, "UNTIL", yylineno);}
+when 		{lexprint(yytext, "WHEN", yylineno);}
+while 		{lexprint(yytext, "WHILE", yylineno);}
+yield 		{lexprint(yytext, "YIELD", yylineno);}
+
+eql? 			{lexprint(yytext, "EQUAL", yylineno);}
+equal?		{lexprint(yytext, "EQUAL_LONG", yylineno);}
+between?	{lexprint(yytext, "IN_RANGE", yylineno);}
+
+
+\/ {str[0] = 0; BEGIN(REGEXP);}
+<REGEXP>\\\/ 	{strcat(str, "\/");}
+<REGEXP>\/ 	{lexprint(str, "REGULAR_EXPRESSION", yylineno); BEGIN(INITIAL);}
+
+<REGEXP>\t 	{strcat(str, "\\t");}
+<REGEXP>\n 	{strcat(str, "\\n");}
+<REGEXP>\r 	{strcat(str, "\\r");}
+<REGEXP>. 	 	{strcat(str, yytext);}
+
+
+\. 				{lexprint(yytext, "POINT", yylineno);}
+
+\+ 			{lexprint(yytext, "PLUS", yylineno);}
+\+\+ 		{lexprint(yytext, "DOUBLE_PLUS", yylineno);}
+\- 			{lexprint(yytext, "MINUS", yylineno);}
+\-\- 			{lexprint(yytext, "DOUBLE_MINUS", yylineno);}
+\* 			{lexprint(yytext, "ASTERISK", yylineno);}
+\*\* 		{lexprint(yytext, "DOUBLE_ASTERISK", yylineno);}
+\/ 			{lexprint(yytext, "SLASH", yylineno);}
+\%			{lexprint(yytext, "PERCENT", yylineno);}
+\*\=			{lexprint(yytext, "ASTERISK_EQUALITY", yylineno);}
+\/\=			{lexprint(yytext, "SLASH_EQUALITY", yylineno);}
+\%\=		{lexprint(yytext, "PERCENT_EQUALITY", yylineno);}
+\+\=		{lexprint(yytext, "PLUS_EQUALITY", yylineno);}
+\-\=			{lexprint(yytext, "MINUS_EQUALITY", yylineno);}
+
+\<			{lexprint(yytext, "LESS", yylineno);}
+\>			{lexprint(yytext, "MORE", yylineno);}
+\<\=		{lexprint(yytext, "LESS_EQUALITY", yylineno);}
+\>\=		{lexprint(yytext, "MORE_EQUALITY", yylineno);}
+\=			{lexprint(yytext, "EQUALITY", yylineno);}
+\=\=		{lexprint(yytext, "DOUBLE_EQUALITY", yylineno);}
+\=\=\=		{lexprint(yytext, "TRIPPLE_EQUALITY", yylineno);}
+\<\=\>		{lexprint(yytext, "LESS_EQUALITY_MORE", yylineno);}
+
+\&\&			{lexprint(yytext, "AND_SIGN", yylineno);}
+\|\|			{lexprint(yytext, "OR_SIGN", yylineno);}
+\!				{lexprint(yytext, "NOT_SIGN", yylineno);}
+
+\{				{lexprint(yytext, "BRACE_OPEN", yylineno);}
+\}				{lexprint(yytext, "BRACE_CLOSE", yylineno);}
+\(				{lexprint(yytext, "PARENTHESIS_OPEN", yylineno);}
+\)				{lexprint(yytext, "PARENTHESIS_CLOSE", yylineno);}
+\[				{lexprint(yytext, "SQUAREBR_OPEN", yylineno);}
+\]				{lexprint(yytext, "SQUAREBR_CLOSE", yylineno);}
+
+\:				{lexprint(yytext, "COLON", yylineno);}
+\;				{lexprint(yytext, "SEMICOLON", yylineno);}
+\,				{lexprint(yytext, "COMMA", yylineno);}
+
+\@			{lexprint(yytext, "COMMERTIAL_AT", yylineno);}
+\$				{lexprint(yytext, "DOLLAR", yylineno);}
+
+[ ] {}
+^[\s]*\n		{}
+
+\\a				{lexprint(yytext, "BELL", yylineno);}
+\\b				{lexprint(yytext, "BACKSPACE", yylineno);}
+\\e				{lexprint(yytext, "ESCAPE", yylineno);}
+\\f				{lexprint(yytext, "FORMFEED", yylineno);}
+\\n				{lexprint(yytext, "NEWLINE", yylineno);}
+\\r				{lexprint(yytext, "RETURN", yylineno);}
+\\s				{lexprint(yytext, "SPACE", yylineno);}
+\\t				{lexprint(yytext, "TAB", yylineno);}
+\\v				{lexprint(yytext, "VERTICAL_TAB", yylineno);}
+\\nnn			{lexprint(yytext, "OCTAL_NNN", yylineno);}
+\\xnn			{lexprint(yytext, "HEX_NN", yylineno);}
+\\cx				{lexprint(yytext, "CNTRL_X", yylineno);}
+\\C\-x			{lexprint(yytext, "CNTRL_X", yylineno);}
+\\M\-\\C\-x	{lexprint(yytext, "META_CNTRL_X", yylineno);}
+\\x				{lexprint(yytext, "X", yylineno);}
+
+\" {str[0] = 0; BEGIN(STRING1);}
+<STRING1>\\\" {strcat(str, "\"");}
+<STRING1>\" 	{lexprint(str, "STRING_LITIRAL", yylineno); insertCounter--; if(insertCounter==0)BEGIN(INITIAL);else BEGIN(INSERT);}
+<STRING1>\\# {strcat(str, "#");}
+<STRING1>\# 	{lexprint(str, "STRING_LITIRAL", yylineno); insertCounter++; lexprint("+", "CONCATINATION", yylineno); BEGIN(INSERT);}
+
+\' {str[0] = 0; BEGIN(STRING2);}
+<STRING2>\\\' {strcat(str, "\'");}
+<STRING2>\' {lexprint(str, "STRING_LITIRAL", yylineno); BEGIN(INITIAL);}
+
+<STRING1,STRING2>\\\\ {strcat(str, "\\");}
+<STRING1,STRING2>\\t {strcat(str, "\t");}
+<STRING1,STRING2>\\s {strcat(str, " ");}
+<STRING1,STRING2>\\n {strcat(str, "\n");}
+<STRING1,STRING2>. {strcat(str, yytext);}
+
+0b[0-1](\_[0-1]+|[0-1]+)*								{lexprint1(binaryToDecimal(yytext), "INT", yylineno);}
+0[0-7](\_[0-7]+|[0-7]+)*								{int n8; sscanf(yytext,"%o", &n8); lexprint1(n8, "INT", yylineno);}
+0x[0-9a-fA-F](\_[0-9a-fA-F]+|[0-9a-fA-F]+)*	{int n16; sscanf(yytext,"%i", &n16); lexprint1(n16, "INT", yylineno);}
+[0-9](\_[0-9]+|[0-9]+)* 								{int n10; sscanf(yytext,"%d", &n10); lexprint1(n10, "INT", yylineno);}
+[0-9]+(\.|e-?)[0-9]+										{float f; sscanf(yytext,"%f", &f);lexprint2(f, "FLOAT", yylineno);}
+
+\#[^\n]+ {lexprint(yytext, "LINE_COMMENT", yylineno);}
+
+^=begin 	{comment[0] = 0; BEGIN(MLCOMMENT);}
+<MLCOMMENT>^=end 	{lexprint(comment, "MULTILINE_COMMENT", yylineno); BEGIN(INITIAL);}
+<MLCOMMENT>\w 			{strcat(comment, yytext);}
+
+
+
+[A-Za-z_][A-Za-z_0-9]* 	{lexprint(yytext, "ID", yylineno);}
+
+%% 
+  
+void main(int argc, char **argv ){
+	freopen("LexemTable.tsv", "w", stdout);
+	freopen("err.log", "w", stderr);
+
+        if (argc > 0){yyin = fopen( argv[1], "r" );} else yyin = stdin;
+        
+        printf("lexem\ttoken\tline\tnumber\n");
+        
+        yylex();
+        return;
+}
