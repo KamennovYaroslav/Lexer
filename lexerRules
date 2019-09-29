@@ -19,6 +19,7 @@
 %x STRING1
 %x STRING2
 %s INSERT
+%x REGEXP
 
 %{
 	int count = 0;
@@ -102,6 +103,17 @@ eql? 			{lexprint(yytext, "EQUAL", yylineno);}
 equal?		{lexprint(yytext, "EQUAL_LONG", yylineno);}
 between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 
+
+\/ {str[0] = 0; BEGIN(REGEXP);}
+<REGEXP>\\\/ 	{strcat(str, "\/");}
+<REGEXP>\/ 	{lexprint(str, "REGULAR_EXPRESSION", yylineno); BEGIN(INITIAL);}
+
+<REGEXP>\t 	{strcat(str, "\\t");}
+<REGEXP>\n 	{strcat(str, "\\n");}
+<REGEXP>\r 	{strcat(str, "\\r");}
+<REGEXP>. 	 	{strcat(str, yytext);}
+
+
 \. 				{lexprint(yytext, "POINT", yylineno);}
 
 \+ 			{lexprint(yytext, "PLUS", yylineno);}
@@ -146,6 +158,8 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 \$				{lexprint(yytext, "DOLLAR", yylineno);}
 
 [ ] {}
+^[\s]*\n		{}
+
 \\a				{lexprint(yytext, "BELL", yylineno);}
 \\b				{lexprint(yytext, "BACKSPACE", yylineno);}
 \\e				{lexprint(yytext, "ESCAPE", yylineno);}
@@ -157,16 +171,16 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 \\v				{lexprint(yytext, "VERTICAL_TAB", yylineno);}
 \\nnn			{lexprint(yytext, "OCTAL_NNN", yylineno);}
 \\xnn			{lexprint(yytext, "HEX_NN", yylineno);}
-\\cx			{lexprint(yytext, "CNTRL_X", yylineno);}
+\\cx				{lexprint(yytext, "CNTRL_X", yylineno);}
 \\C\-x			{lexprint(yytext, "CNTRL_X", yylineno);}
 \\M\-\\C\-x	{lexprint(yytext, "META_CNTRL_X", yylineno);}
 \\x				{lexprint(yytext, "X", yylineno);}
 
 \" {str[0] = 0; BEGIN(STRING1);}
 <STRING1>\\\" {strcat(str, "\"");}
-<STRING1>\" {lexprint(str, "STRING_LITIRAL", yylineno); insertCounter--; if(insertCounter==0)BEGIN(INITIAL);else BEGIN(INSERT);}
+<STRING1>\" 	{lexprint(str, "STRING_LITIRAL", yylineno); insertCounter--; if(insertCounter==0)BEGIN(INITIAL);else BEGIN(INSERT);}
 <STRING1>\\# {strcat(str, "#");}
-<STRING1>\# {lexprint(str, "STRING_LITIRAL", yylineno); insertCounter++; lexprint("+", "CONCATINATION", yylineno); BEGIN(INSERT);}
+<STRING1>\# 	{lexprint(str, "STRING_LITIRAL", yylineno); insertCounter++; lexprint("+", "CONCATINATION", yylineno); BEGIN(INSERT);}
 
 \' {str[0] = 0; BEGIN(STRING2);}
 <STRING2>\\\' {strcat(str, "\'");}
@@ -178,17 +192,19 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 <STRING1,STRING2>\\n {strcat(str, "\n");}
 <STRING1,STRING2>. {strcat(str, yytext);}
 
-0b[0-1](\_[0-1]+|[0-1]+)*						{lexprint1(binaryToDecimal(yytext), "INT", yylineno);}
-0[0-7](\_[0-7]+|[0-7]+)*						{int n8; sscanf(yytext,"%o", &n8); lexprint1(n8, "INT", yylineno);}
+0b[0-1](\_[0-1]+|[0-1]+)*								{lexprint1(binaryToDecimal(yytext), "INT", yylineno);}
+0[0-7](\_[0-7]+|[0-7]+)*								{int n8; sscanf(yytext,"%o", &n8); lexprint1(n8, "INT", yylineno);}
 0x[0-9a-fA-F](\_[0-9a-fA-F]+|[0-9a-fA-F]+)*	{int n16; sscanf(yytext,"%i", &n16); lexprint1(n16, "INT", yylineno);}
-[0-9](\_[0-9]+|[0-9]+)* 						{int n10; sscanf(yytext,"%d", &n10); lexprint1(n10, "INT", yylineno);}
-[0-9]+(\.|e-?)[0-9]+					{float f; sscanf(yytext,"%f", &f);lexprint2(f, "FLOAT", yylineno);}
+[0-9](\_[0-9]+|[0-9]+)* 								{int n10; sscanf(yytext,"%d", &n10); lexprint1(n10, "INT", yylineno);}
+[0-9]+(\.|e-?)[0-9]+										{float f; sscanf(yytext,"%f", &f);lexprint2(f, "FLOAT", yylineno);}
 
 \#[^\n]+ {lexprint(yytext, "LINE_COMMENT", yylineno);}
 
 ^=begin 	{comment[0] = 0; BEGIN(MLCOMMENT);}
 <MLCOMMENT>^=end 	{lexprint(comment, "MULTILINE_COMMENT", yylineno); BEGIN(INITIAL);}
 <MLCOMMENT>\w 			{strcat(comment, yytext);}
+
+
 
 [A-Za-z_][A-Za-z_0-9]* 	{lexprint(yytext, "ID", yylineno);}
 
