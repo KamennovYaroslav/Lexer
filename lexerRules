@@ -37,6 +37,45 @@ break 		{lexprint(yytext, "BREAK", yylineno);}
 case 		{lexprint(yytext, "CASE", yylineno);}
 class 		{lexprint(yytext, "CLASS_DEF", yylineno);}
 defined? 	{lexprint(yytext, "CHECK_DEF", yylineno);}
+do 			{lexprint(yytext, "DO", yylineno);}%option noyywrap
+%option never-interactive
+%option yylineno
+
+%{
+	#include <stdlib.h>
+	#include <stdio.h>
+	#include <string.h>
+	#include <conio.h>
+	#include <locale.h> 
+
+    void lexprint(char * lexem, char  token[15], int line); 
+%}
+
+%x MLCOMMENT
+
+%{
+	int count = 0;
+	char comment[1000];
+        void lexprint(char * lexem, char  token[15], int line){
+                printf("%s\t%s\t%d\t%d\n", lexem, token, yylineno, count);
+                count++;
+        }
+%}
+%% 
+
+if 				{lexprint(yytext, "IF", yylineno);}
+else 			{lexprint(yytext, "ELSE", yylineno);}
+elseif 		{lexprint(yytext, "ELSEIF", yylineno);}
+for 			{lexprint(yytext, "FOR", yylineno);}
+def 			{lexprint(yytext, "FUNCTION_START", yylineno);}
+end 			{lexprint(yytext, "BLOCK_ENDING", yylineno);}
+begin 		{lexprint(yytext, "BLOCK_BEGINNING", yylineno);}
+alias 			{lexprint(yytext, "ALIAS", yylineno);}
+and 			{lexprint(yytext, "AND", yylineno);}
+break 		{lexprint(yytext, "BREAK", yylineno);}
+case 		{lexprint(yytext, "CASE", yylineno);}
+class 		{lexprint(yytext, "CLASS_DEF", yylineno);}
+defined? 	{lexprint(yytext, "CHECK_DEF", yylineno);}
 do 			{lexprint(yytext, "DO", yylineno);}
 ensure 		{lexprint(yytext, "ENSURE", yylineno);}
 false 		{lexprint(yytext, "FALSE", yylineno);}
@@ -134,8 +173,8 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 
 
 #[\w]+\n {lexprint(yytext, "LINE_COMMENT", yylineno);}
-^=begin 	{comment[0] = 0; BEGIN(MLCOMMENT);}
 
+^=begin 	{comment[0] = 0; BEGIN(MLCOMMENT);}
 <MLCOMMENT>^=end 	{lexprint(comment, "MULTILINE_COMMENT", yylineno); BEGIN(INITIAL);}
 <MLCOMMENT>\w 			{strcat(comment, yytext);}
 
