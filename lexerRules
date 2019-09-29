@@ -9,7 +9,8 @@
 	#include <conio.h>
 	#include <locale.h> 
 
-    void lexprint(char * lexem, char  token[15], int line); 
+    void lexprint(char * lexem, char  token[150], int line); 
+	void lexprint1(int lexem, char  token[150], int line);
 %}
 
 %x MLCOMMENT
@@ -17,8 +18,12 @@
 %{
 	int count = 0;
 	char comment[1000];
-        void lexprint(char * lexem, char  token[15], int line){
+        void lexprint(char * lexem, char  token[150], int line){
                 printf("%s\t%s\t%d\t%d\n", lexem, token, yylineno, count);
+                count++;
+        }
+		void lexprint1(int lexem, char  token[150], int line){
+                printf("%d\t%s\t%d\t%d\n", lexem, token, yylineno, count);
                 count++;
         }
 %}
@@ -126,10 +131,10 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 #\{expr\}	{lexprint(yytext, "VALUE_OF_EXPRESSION", yylineno);}
 
 
-0[0-7](\_[0-7]+)*						{lexprint(yytext, "INT_8", yylineno);}
-0x[0-9a-fA-F](\_[0-9a-fA-F]+)*	{lexprint(yytext, "INT_16", yylineno);}
+0[0-7](\_[0-7]+)*						{int n8; sscanf(yytext,"%o", &n8); lexprint1(n8, "INT_8", yylineno);}
+0x[0-9a-fA-F](\_[0-9a-fA-F]+)*	{int n16; sscanf(yytext,"%i", &n16); lexprint1(n16, "INT_16", yylineno);}
 0b[0-1](\_[0-1]+)*						{lexprint(yytext, "INT_2", yylineno);}
-[0-9](\_[0-9]+)* 						{lexprint(yytext, "INT_10", yylineno);}
+[0-9](\_[0-9]+)* 						{int n10; sscanf(yytext,"%d", &n10); lexprint1(n10, "INT_10", yylineno);}
 [0-9]+(\.|e-?)[0-9]+					{lexprint(yytext, "FLOAT", yylineno);}
 
 
