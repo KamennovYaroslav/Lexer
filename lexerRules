@@ -9,59 +9,56 @@
 	#include <conio.h>
 	#include <locale.h> 
 
-    void lexprint(char * lexem, char  token[15], int line); 
+    void lexprint(char * lexem, char  token[150], int line); 
+	void lexprint1(int lexem, char  token[150], int line);
+	void lexprint2(float lexem, char  token[150], int line);
+	int binaryToDecimal(char* strBin);
 %}
 
 %x MLCOMMENT
+%x STRING1
+%x STRING2
+%s INSERT
 
 %{
 	int count = 0;
+	int insertCounter = 0;
 	char comment[1000];
-        void lexprint(char * lexem, char  token[15], int line){
+	char str[1000];
+        void lexprint(char * lexem, char  token[150], int line){
                 printf("%s\t%s\t%d\t%d\n", lexem, token, yylineno, count);
                 count++;
         }
-%}
-%% 
-
-if 				{lexprint(yytext, "IF", yylineno);}
-else 			{lexprint(yytext, "ELSE", yylineno);}
-elseif 		{lexprint(yytext, "ELSEIF", yylineno);}
-for 			{lexprint(yytext, "FOR", yylineno);}
-def 			{lexprint(yytext, "FUNCTION_START", yylineno);}
-end 			{lexprint(yytext, "BLOCK_ENDING", yylineno);}
-begin 		{lexprint(yytext, "BLOCK_BEGINNING", yylineno);}
-alias 			{lexprint(yytext, "ALIAS", yylineno);}
-and 			{lexprint(yytext, "AND", yylineno);}
-break 		{lexprint(yytext, "BREAK", yylineno);}
-case 		{lexprint(yytext, "CASE", yylineno);}
-class 		{lexprint(yytext, "CLASS_DEF", yylineno);}
-defined? 	{lexprint(yytext, "CHECK_DEF", yylineno);}
-do 			{lexprint(yytext, "DO", yylineno);}%option noyywrap
-%option never-interactive
-%option yylineno
-
-%{
-	#include <stdlib.h>
-	#include <stdio.h>
-	#include <string.h>
-	#include <conio.h>
-	#include <locale.h> 
-
-    void lexprint(char * lexem, char  token[15], int line); 
-%}
-
-%x MLCOMMENT
-
-%{
-	int count = 0;
-	char comment[1000];
-        void lexprint(char * lexem, char  token[15], int line){
-                printf("%s\t%s\t%d\t%d\n", lexem, token, yylineno, count);
+		void lexprint1(int lexem, char  token[150], int line){
+                printf("%d\t%s\t%d\t%d\n", lexem, token, yylineno, count);
                 count++;
         }
+		void lexprint2(float lexem, char  token[150], int line){
+                printf("%f\t%s\t%d\t%d\n", lexem, token, yylineno, count);
+                count++;
+        }
+		// Function to convert binary to decimal
+		int binaryToDecimal(char* strBin)
+		{
+			char strBufer[100] = {0};
+			strcpy(strBufer, strBin);
+			int dec_value = 0;
+
+			// Initializing base value to 1, i.e 2^0
+			int base = 1;
+
+			int len = strlen(strBufer);
+			for (int i = len - 1; i > 1; i--) {
+				if (strBufer[i] == '1')
+					dec_value += base;
+				base = base * 2;
+			}
+
+			return dec_value;
+		}
 %}
 %% 
+<INSERT>\} {lexprint(yytext, "BRACE_CLOSE", yylineno); str[0] = 0; lexprint("+", "CONCATINATION", yylineno); BEGIN(STRING1);}
 
 if 				{lexprint(yytext, "IF", yylineno);}
 else 			{lexprint(yytext, "ELSE", yylineno);}
@@ -143,36 +140,51 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 
 \:				{lexprint(yytext, "COLON", yylineno);}
 \;				{lexprint(yytext, "SEMICOLON", yylineno);}
+\,				{lexprint(yytext, "COMMA", yylineno);}
 
 \@			{lexprint(yytext, "COMMERTIAL_AT", yylineno);}
 \$				{lexprint(yytext, "DOLLAR", yylineno);}
 
-\a				{lexprint(yytext, "BELL", yylineno);}
-\b				{lexprint(yytext, "BACKSPACE", yylineno);}
-\e				{lexprint(yytext, "ESCAPE", yylineno);}
-\f				{lexprint(yytext, "FORMFEED", yylineno);}
-\n				{lexprint(yytext, "NEWLINE", yylineno);}
-\r				{lexprint(yytext, "RETURN", yylineno);}
-\s				{lexprint(yytext, "SPACE", yylineno);}
-\t				{lexprint(yytext, "TAB", yylineno);}
-\v				{lexprint(yytext, "VERTICAL_TAB", yylineno);}
-\nnn			{lexprint(yytext, "OCTAL_NNN", yylineno);}
-\xnn			{lexprint(yytext, "HEX_NN", yylineno);}
-\cx			{lexprint(yytext, "CNTRL_X", yylineno);}
-\C-x			{lexprint(yytext, "CNTRL_X", yylineno);}
-\M-\C-x	{lexprint(yytext, "META_CNTRL_X", yylineno);}
-\x				{lexprint(yytext, "X", yylineno);}
-#{expr}	{lexprint(yytext, "VALUE_OF_EXPRESSION", yylineno);}
+[ ] {}
+\\a				{lexprint(yytext, "BELL", yylineno);}
+\\b				{lexprint(yytext, "BACKSPACE", yylineno);}
+\\e				{lexprint(yytext, "ESCAPE", yylineno);}
+\\f				{lexprint(yytext, "FORMFEED", yylineno);}
+\\n				{lexprint(yytext, "NEWLINE", yylineno);}
+\\r				{lexprint(yytext, "RETURN", yylineno);}
+\\s				{lexprint(yytext, "SPACE", yylineno);}
+\\t				{lexprint(yytext, "TAB", yylineno);}
+\\v				{lexprint(yytext, "VERTICAL_TAB", yylineno);}
+\\nnn			{lexprint(yytext, "OCTAL_NNN", yylineno);}
+\\xnn			{lexprint(yytext, "HEX_NN", yylineno);}
+\\cx			{lexprint(yytext, "CNTRL_X", yylineno);}
+\\C\-x			{lexprint(yytext, "CNTRL_X", yylineno);}
+\\M\-\\C\-x	{lexprint(yytext, "META_CNTRL_X", yylineno);}
+\\x				{lexprint(yytext, "X", yylineno);}
 
+\" {str[0] = 0; BEGIN(STRING1);}
+<STRING1>\\\" {strcat(str, "\"");}
+<STRING1>\" {lexprint(str, "STRING_LITIRAL", yylineno); insertCounter--; if(insertCounter==0)BEGIN(INITIAL);else BEGIN(INSERT);}
+<STRING1>\\# {strcat(str, "#");}
+<STRING1>\# {lexprint(str, "STRING_LITIRAL", yylineno); insertCounter++; lexprint("+", "CONCATINATION", yylineno); BEGIN(INSERT);}
 
-[1-9](\_[0-9]+)* 						{lexprint(yytext, "INT_10", yylineno);}
-0[0-7](\_[0-7]+)*						{lexprint(yytext, "INT_8", yylineno);}
-0x[0-9a-fA-F](\_[0-9a-fA-F]+)*	{lexprint(yytext, "INT_16", yylineno);}
-0b[0-1](\_[0-1]+)*						{lexprint(yytext, "INT_2", yylineno);}
-[0-9]+(\.|e-?)[0-9]+					{lexprint(yytext, "FLOAT", yylineno);}
+\' {str[0] = 0; BEGIN(STRING2);}
+<STRING2>\\\' {strcat(str, "\'");}
+<STRING2>\' {lexprint(str, "STRING_LITIRAL", yylineno); BEGIN(INITIAL);}
 
+<STRING1,STRING2>\\\\ {strcat(str, "\\");}
+<STRING1,STRING2>\\t {strcat(str, "\t");}
+<STRING1,STRING2>\\s {strcat(str, " ");}
+<STRING1,STRING2>\\n {strcat(str, "\n");}
+<STRING1,STRING2>. {strcat(str, yytext);}
 
-#[\w]+\n {lexprint(yytext, "LINE_COMMENT", yylineno);}
+0b[0-1](\_[0-1]+|[0-1]+)*						{lexprint1(binaryToDecimal(yytext), "INT", yylineno);}
+0[0-7](\_[0-7]+|[0-7]+)*						{int n8; sscanf(yytext,"%o", &n8); lexprint1(n8, "INT", yylineno);}
+0x[0-9a-fA-F](\_[0-9a-fA-F]+|[0-9a-fA-F]+)*	{int n16; sscanf(yytext,"%i", &n16); lexprint1(n16, "INT", yylineno);}
+[0-9](\_[0-9]+|[0-9]+)* 						{int n10; sscanf(yytext,"%d", &n10); lexprint1(n10, "INT", yylineno);}
+[0-9]+(\.|e-?)[0-9]+					{float f; sscanf(yytext,"%f", &f);lexprint2(f, "FLOAT", yylineno);}
+
+\#[^\n]+ {lexprint(yytext, "LINE_COMMENT", yylineno);}
 
 ^=begin 	{comment[0] = 0; BEGIN(MLCOMMENT);}
 <MLCOMMENT>^=end 	{lexprint(comment, "MULTILINE_COMMENT", yylineno); BEGIN(INITIAL);}
