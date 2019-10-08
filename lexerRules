@@ -85,17 +85,17 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 <REGEXP>\r 	{strcat(str, "\\r");}
 <REGEXP>. 	 	{strcat(str, yytext);}
 
-
-
-
 0b[0-1](\_?[0-1]+)*								{char res[100]; clearStr(yytext, res);lexprint1(binaryToDecimal(res), "INT", yylineno);}
-0[0-7](\_?[0-7]+)*								{char res[100]; clearStr(yytext, res);int n8; sscanf(res,"%o", &n8); lexprint1(n8, "INT", yylineno);}
-0x[0-9a-fA-F](\_?[0-9a-fA-F]+)*					{char res[100]; clearStr(yytext, res); int n16; sscanf(res,"%i", &n16); lexprint1(n16, "INT", yylineno);}
-[1-9](\_?[0-9]+)*								{char res[100]; clearStr(yytext, res); int n10; sscanf(res,"%d", &n10); lexprint1(n10, "INT", yylineno);}
+0[0-7](\_?[0-7]+)*									{char res[100]; clearStr(yytext, res);int n8; sscanf(res,"%o", &n8); lexprint1(n8, "INT", yylineno);}
+0x[0-9a-fA-F](\_?[0-9a-fA-F]+)*				{char res[100]; clearStr(yytext, res); int n16; sscanf(res,"%i", &n16); lexprint1(n16, "INT", yylineno);}
+[1-9](\_?[0-9]+)*									{char res[100]; clearStr(yytext, res); int n10; sscanf(res,"%d", &n10); lexprint1(n10, "INT", yylineno);}
 		
 (0|([1-9](\_?[0-9]+)*))(\.[0-9]+(\_[0-9]+)*)?((e[\+\-]?)[0-9]+(\_[0-9]+)*)?		{char res[100]; clearStr(yytext, res);lexprint2(atof(res), "FLOAT", yylineno);}
-0+(\_[1-9]+)*(\.[0-9]+(\_[0-9]+)*)?((e[\+\-]?)[0-9]+(\_[0-9]+)*)?				{lexprint(yytext, "ERROR:", yylineno);}		
 
+0+(\_?[1-9]+)*(\.[0-9]+(\_[0-9]+)*)?((e[\+\-]?)[0-9]+(\_[0-9]+)*)?				{lexprint(yytext, "ERROR:unexpected fraction part after numeric literal", yylineno);}		
+0+(([0-8]\_?)*[8-9](\_?[0-8])*)+ 																		{lexprint(yytext, "ERROR:Invalid octal digit", yylineno);}	
+0x(([0-9A-Fa-f]\_?)*[G-Zg-z](\_?[0-9A-Fa-f])*)+												{lexprint(yytext, "ERROR:numeric literal without digits", yylineno);}	
+0b(([01]\_?)*[2-9A-Za-z](\_?[01])*)+ 																{lexprint(yytext, "ERROR:numeric literal without digits", yylineno);}
 
 
 \. 				{lexprint(yytext, "POINT", yylineno);}
