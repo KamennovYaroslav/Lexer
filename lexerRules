@@ -30,6 +30,9 @@
 	int insertCounter = 0;
 	char comment[1000];
 	char str[1000];
+	char res[100]; 
+	int number;
+	int state = 0;
 %}
 <INSERT>\} {lexprint(yytext, "BRACE_CLOSE", yylineno); str[0] = 0; lexprint("+", "CONCATENATION", yylineno); BEGIN(STRING1);}
 
@@ -90,15 +93,13 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 0x(([0-9A-Fa-f]\_?)*[G-Zg-z](\_?[0-9A-Fa-f])*)+												{lexprint(yytext, "ERROR:numeric literal without digits", yylineno);}	
 0b(([01]\_?)*[2-9A-Za-z](\_?[01])*)+ 																{lexprint(yytext, "ERROR:numeric literal without digits", yylineno);}
 
-0b[0-1](\_?[0-1]+)*								{char res[100]; clearStr(yytext, res);lexprint1(binaryToDecimal(res), "INT", yylineno);}
-0[0-7](\_?[0-7]+)*									{char res[100]; clearStr(yytext, res);int n8; sscanf(res,"%o", &n8); lexprint1(n8, "INT", yylineno);}
-0x[0-9a-fA-F](\_?[0-9a-fA-F]+)*				{char res[100]; clearStr(yytext, res); int n16; sscanf(res,"%i", &n16); lexprint1(n16, "INT", yylineno);}
-0|([1-9](\_?[0-9]+)*)								{char res[100]; clearStr(yytext, res); int n10; sscanf(res,"%d", &n10); lexprint1(n10, "INT", yylineno);}
+0b[0-1](\_?[0-1]+)*								{clearStr(yytext, res);lexprint1(binaryToDecimal(res), "INT", yylineno);}
+0[0-7](\_?[0-7]+)*									{clearStr(yytext, res); sscanf(res,"%o", &number); lexprint1(number, "INT", yylineno);}
+0x[0-9a-fA-F](\_?[0-9a-fA-F]+)*				{clearStr(yytext, res); sscanf(res,"%i", &number); lexprint1(number, "INT", yylineno);}
+0|([1-9](\_?[0-9]+)*)								{clearStr(yytext, res); sscanf(res,"%d", &number); lexprint1(number, "INT", yylineno);}
 		
-(0|([1-9](\_?[0-9]+)*))(\.[0-9]+(\_[0-9]+)*)?((e[\+\-]?)[0-9]+(\_[0-9]+)*)?		{char res[100]; clearStr(yytext, res);lexprint2(atof(res), "FLOAT", yylineno);}
+(0|([1-9](\_?[0-9]+)*))(\.[0-9]+(\_[0-9]+)*)?((e[\+\-]?)[0-9]+(\_[0-9]+)*)?		{clearStr(yytext, res);lexprint2(atof(res), "FLOAT", yylineno);}
 0+([1-9]+\_?)*(\.[0-9]+(\_[0-9]+)*)?((e[\+\-]?)[0-9]+(\_[0-9]+)*)?				{lexprint(yytext, "ERROR:unexpected fraction part after numeric literal", yylineno);}	
-
-
 
 
 \. 				{lexprint(yytext, "POINT", yylineno);}
@@ -147,15 +148,15 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 [ ] {}
 ^[\s]*\n		{}
 
-\" {str[0] = 0; BEGIN(STRING1);}
+\" {str[0] = 0; state = 1; BEGIN(STRING1);}
 <STRING1>\\\" {strcat(str, "\"");}
-<STRING1>\" 	{lexprint(str, "STRING_LITIRAL", yylineno); insertCounter--; if(insertCounter==0)BEGIN(INITIAL);else BEGIN(INSERT);}
+<STRING1>\" 	{lexprint(str, "STRING_LITIRAL", yylineno); insertCounter--; if(insertCounter==0){state = 0; BEGIN(INITIAL);}else BEGIN(INSERT);}
 <STRING1>\\# {strcat(str, "#");}
 <STRING1>\# 	{lexprint(str, "STRING_LITIRAL", yylineno); insertCounter++; lexprint("+", "CONCATINATION", yylineno); BEGIN(INSERT);}
 
-\' {str[0] = 0; BEGIN(STRING2);}
+\' {str[0] = 0; state = 1;  BEGIN(STRING2);}
 <STRING2>\\\' {strcat(str, "\'");}
-<STRING2>\' {lexprint(str, "STRING_LITIRAL", yylineno); BEGIN(INITIAL);}
+<STRING2>\' {lexprint(str, "STRING_LITIRAL", yylineno); state = 0; BEGIN(INITIAL);}
 
 <STRING1,STRING2>\\\\ {strcat(str, "\\");}
 <STRING1,STRING2>\\\? {strcat(str, "\?");}
@@ -168,20 +169,17 @@ between?	{lexprint(yytext, "IN_RANGE", yylineno);}
 <STRING1,STRING2>. {strcat(str, yytext);}
 
 
-
-
-
-
-
 \#[^\n]+ {lexprint(yytext, "LINE_COMMENT", yylineno);}
 
-^=begin 	{comment[0] = 0; BEGIN(MLCOMMENT);}
-<MLCOMMENT>^=end 	{lexprint(comment, "MULTILINE_COMMENT", yylineno); BEGIN(INITIAL);}
+^=begin 	{comment[0] = 0; state = 2; BEGIN(MLCOMMENT);}
+<MLCOMMENT>^=end 	{lexprint(comment, "MULTILINE_COMMENT", yylineno); state = 0; BEGIN(INITIAL);}
 <MLCOMMENT>\w 			{strcat(comment, yytext);}
 
 [A-Za-z_][A-Za-z_0-9]* 	{lexprint(yytext, "ID", yylineno);}
 
 . {lexprint(yytext, "ERROR: UNKNOWN_CHARACTER", yylineno);}
+
+<<EOF>> {if(state == 1){lexprint("unterminated string meets end of file","ERROR", yylineno);}if(state == 2){lexprint("embedded document meets end of file","ERROR", yylineno);} return 0;}
 
 %% 
 void lexprint(char * lexem, char  token[150], int line){
